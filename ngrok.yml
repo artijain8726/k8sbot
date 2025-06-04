@@ -1,0 +1,6 @@
+version: 2
+authtoken: "2xtw6KKgeYBNA0xYzDPWKp7x5ca_49Ayw29dgoqVbiHghSpRD" # Add your authtoken here if you have one
+tunnels:
+  mcp:
+    addr: 6274
+    proto: http
