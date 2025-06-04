@@ -1,6 +1,7 @@
 from kubernetes import client, config
 from typing import Dict, List
 import logging
+from kubernetes.config import kube_config
 
 logger = logging.getLogger(__name__)
 
@@ -8,11 +9,30 @@ class KubernetesClient:
     def __init__(self):
         try:
             config.load_kube_config()
+            self._contexts, self._active_context = kube_config.list_kube_config_contexts()
         except:
             config.load_incluster_config()
+            self._contexts = [{"name": "in-cluster"}]
+            self._active_context = {"name": "in-cluster"}
         
         self.core_v1 = client.CoreV1Api()
         self.apps_v1 = client.AppsV1Api()
+
+    def get_current_context(self) -> Dict:
+        """Get information about the current Kubernetes context."""
+        return {
+            "current_context": self._active_context["name"],
+            "cluster": self._active_context.get("context", {}).get("cluster", "unknown"),
+            "namespace": self._active_context.get("context", {}).get("namespace", "default")
+        }
+
+    def list_available_contexts(self) -> List[Dict]:
+        """List all available Kubernetes contexts."""
+        return [{
+            "name": ctx["name"],
+            "cluster": ctx.get("context", {}).get("cluster", "unknown"),
+            "namespace": ctx.get("context", {}).get("namespace", "default")
+        } for ctx in self._contexts]
 
     def list_pods(self, namespace: str = "default") -> List[Dict]:
         pods = self.core_v1.list_namespaced_pod(namespace)

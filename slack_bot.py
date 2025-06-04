@@ -122,6 +122,63 @@ class SlackBot:
             except Exception as e:
                 respond(f"Error: {str(e)}")
 
+        @self.app.command("/cluster")
+        def get_cluster_info(ack, respond, command):
+            ack()
+            try:
+                context_info = self.k8s.get_current_context()
+                blocks = [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "☸️ Current Kubernetes Context"
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*Context:* {context_info['current_context']}\n"
+                                   f"*Cluster:* {context_info['cluster']}\n"
+                                   f"*Default Namespace:* {context_info['namespace']}"
+                        }
+                    }
+                ]
+                respond(blocks=blocks)
+            except Exception as e:
+                respond(f"Error: {str(e)}")
+
+        @self.app.command("/contexts")
+        def list_contexts(ack, respond, command):
+            ack()
+            try:
+                contexts = self.k8s.list_available_contexts()
+                blocks = [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "☸️ Available Kubernetes Contexts"
+                        }
+                    }
+                ]
+                
+                for ctx in contexts:
+                    blocks.append({
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*Context:* {ctx['name']}\n"
+                                   f"• Cluster: {ctx['cluster']}\n"
+                                   f"• Default Namespace: {ctx['namespace']}"
+                        }
+                    })
+                
+                respond(blocks=blocks)
+            except Exception as e:
+                respond(f"Error: {str(e)}")
+
     def start(self):
         """Start the Slack bot using Socket Mode"""
         try:

@@ -80,6 +80,22 @@ async def handle_list_tools() -> list[types.Tool]:
     """
     return [
         types.Tool(
+            name="get_current_context",
+            description="Get information about the current Kubernetes context",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        types.Tool(
+            name="list_contexts",
+            description="List all available Kubernetes contexts",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        types.Tool(
             name="list_pods",
             description="List all pods in a namespace",
             inputSchema={
@@ -136,7 +152,30 @@ async def handle_call_tool(
         arguments = {}
     
     try:
-        if name == "list_pods":
+        if name == "get_current_context":
+            context_info = k8s_client.get_current_context()
+            return [types.TextContent(
+                type="text",
+                text=f"Current Context: {context_info['current_context']}\n"
+                     f"Cluster: {context_info['cluster']}\n"
+                     f"Default Namespace: {context_info['namespace']}"
+            )]
+        
+        elif name == "list_contexts":
+            contexts = k8s_client.list_available_contexts()
+            context_list = []
+            for ctx in contexts:
+                context_list.append(
+                    f"Context: {ctx['name']}\n"
+                    f"  Cluster: {ctx['cluster']}\n"
+                    f"  Default Namespace: {ctx['namespace']}"
+                )
+            return [types.TextContent(
+                type="text",
+                text="Available Kubernetes Contexts:\n\n" + "\n\n".join(context_list)
+            )]
+        
+        elif name == "list_pods":
             namespace = arguments.get("namespace", "default")
             pods = k8s_client.list_pods(namespace)
             return [types.TextContent(
